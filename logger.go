@@ -11,8 +11,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-daybh/lger
-	"github.com/gin-gongcrsin
+
+	"github.com/pkg/errors"
 )
 
 type Level int
@@ -97,14 +97,14 @@ type FileHandler struct {
 
 type RotatingHandler struct {
 	LogHandler
-	dir      string
-	filename string
-	maxNum   int
-	maxSize  int64
-	filetime time.Time
-	suffix   int
+	dir           string
+	filename      string
+	maxNum        int
+	maxSize       int64
+	filetime      time.Time
+	suffix        int
 	OneFilePerDay bool
-	logfile  *os.File
+	logfile       *os.File
 }
 
 /*
@@ -113,13 +113,13 @@ type RotatingHandler struct {
 ===================
 */
 type logconfig struct {
-	Handle   string `json:"handle"`
-	Dir      string `json:"dir"`
-	Filename string `json:"filename"`
-	Level    int    `json:"level"`
-	Maxnum   int    `json:"maxnum"`
-	Maxsize  string `json:"maxsize"`
-	OneFilePerDay bool `json:"oneFileperDay`
+	Handle        string `json:"handle"`
+	Dir           string `json:"dir"`
+	Filename      string `json:"filename"`
+	Level         int    `json:"level"`
+	Maxnum        int    `json:"maxnum"`
+	Maxsize       string `json:"maxsize"`
+	OneFilePerDay bool   `json:"oneFileperDay`
 }
 
 type logconfigs struct {
@@ -160,7 +160,7 @@ func NewFileHandler(filepath string) (*FileHandler, error) {
 	}, nil
 }
 
-func NewRotatingHandler(dir string, filename string, maxNum int, maxSize int64,OneFilePerDay bool) (*RotatingHandler, error) {
+func NewRotatingHandler(dir string, filename string, maxNum int, maxSize int64, OneFilePerDay bool) (*RotatingHandler, error) {
 	if maxNum < 0 {
 		return nil, errors.Errorf("maxNum is less than 0")
 	}
@@ -169,12 +169,12 @@ func NewRotatingHandler(dir string, filename string, maxNum int, maxSize int64,O
 		return nil, err
 	}
 	h := &RotatingHandler{
-		dir:      dir,
-		filename: filename,
-		maxNum:   maxNum,
-		maxSize:  maxSize,
-		suffix:   0,
-		OneFilePerDay,OneFilePerDay,
+		dir:           dir,
+		filename:      filename,
+		maxNum:        maxNum,
+		maxSize:       maxSize,
+		suffix:        0,
+		OneFilePerDay: OneFilePerDay,
 	}
 	h.newFileData()
 
@@ -225,7 +225,7 @@ func newHandler(lg logconfig) (Handler, error) {
 		default:
 			return nil, fmt.Errorf("Error maxsize type:%v", unitStr)
 		}
-		return NewRotatingHandler(lg.Dir, lg.Filename, lg.Maxnum, maxSize)
+		return NewRotatingHandler(lg.Dir, lg.Filename, lg.Maxnum, maxSize, lg.OneFilePerDay)
 	}
 	return nil, fmt.Errorf("Unknown handle:%v", lg.Handle)
 }
@@ -420,7 +420,10 @@ func (h *RotatingHandler) newFileData() {
 }
 
 func (h *RotatingHandler) generateFileName() string {
-	filetime := h.filetime.Format(h.generateFileName?"20060102150405":"20060102")
+	filetime := h.filetime.Format("20060102150405")
+	if h.OneFilePerDay {
+		filetime = h.filetime.Format("20060102")
+	}
 	if h.suffix <= 0 {
 		return fmt.Sprintf("%s/%s.%s.0.log", h.dir, h.filename, filetime)
 	}
