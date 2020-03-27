@@ -11,8 +11,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/pkg/errors"
+daybh/lger
+	"github.com/gin-gongcrsin
 )
 
 type Level int
@@ -103,6 +103,7 @@ type RotatingHandler struct {
 	maxSize  int64
 	filetime time.Time
 	suffix   int
+	OneFilePerDay bool
 	logfile  *os.File
 }
 
@@ -118,6 +119,7 @@ type logconfig struct {
 	Level    int    `json:"level"`
 	Maxnum   int    `json:"maxnum"`
 	Maxsize  string `json:"maxsize"`
+	OneFilePerDay bool `json:"oneFileperDay`
 }
 
 type logconfigs struct {
@@ -158,7 +160,7 @@ func NewFileHandler(filepath string) (*FileHandler, error) {
 	}, nil
 }
 
-func NewRotatingHandler(dir string, filename string, maxNum int, maxSize int64) (*RotatingHandler, error) {
+func NewRotatingHandler(dir string, filename string, maxNum int, maxSize int64,OneFilePerDay bool) (*RotatingHandler, error) {
 	if maxNum < 0 {
 		return nil, errors.Errorf("maxNum is less than 0")
 	}
@@ -172,6 +174,7 @@ func NewRotatingHandler(dir string, filename string, maxNum int, maxSize int64) 
 		maxNum:   maxNum,
 		maxSize:  maxSize,
 		suffix:   0,
+		OneFilePerDay,OneFilePerDay,
 	}
 	h.newFileData()
 
@@ -417,7 +420,7 @@ func (h *RotatingHandler) newFileData() {
 }
 
 func (h *RotatingHandler) generateFileName() string {
-	filetime := h.filetime.Format("20060102150405")
+	filetime := h.filetime.Format(h.generateFileName?"20060102150405":"20060102")
 	if h.suffix <= 0 {
 		return fmt.Sprintf("%s/%s.%s.0.log", h.dir, h.filename, filetime)
 	}
